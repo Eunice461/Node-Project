@@ -36,13 +36,14 @@ passport.use(new Strategy(AUTH_OPTIONS, verifyCallback));
 
 //Serializeuser is when we save the session to the cookie
 passport.serializeUser((user, done) => {
-    //passing the id mean we want the session to send back only the id to avoid sending in more datas because our cookies can only save 4kb on the browesr
-    // we can either send the obj or the id
+    //the user and user.id is coming from the google profile(verifyCallback)
     done(null, user.id)
 })
 
 //Deserializeuser is when we read the session from the cookie
 passport.deserializeUser((id, done) => {
+    //passing the id mean we want the session to send back only the id to avoid sending in more datas because our cookies can only save 4kb on the browesr
+    // we can either send the obj or the id
     done(null, id)
 })
 
@@ -70,7 +71,8 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 function checkLoggedIn(req, res, next) {
-    const isLoggedIn = true;
+    console.log('Current user is:', req.user);
+    const isLoggedIn = req.isAuthenticated() && req.user; //isAuthenticated is a passport property
     if(!isLoggedIn){
         return res.status(401).json({
             error: 'you must log in'
@@ -93,7 +95,10 @@ app.get('/auth/google/callback', passport.authenticate('google', {
 }
 );
 
-app.get('/auth/logout', (req, res) => {})
+app.get('/auth/logout', (req, res) => {
+    req.logOut(); //Remove req.user and clears any logged in session
+    return res.redirect('/')
+})
 
 app.get('/secret', checkLoggedIn, (req, res) => {
     return res.send('Your personal number is 42')
